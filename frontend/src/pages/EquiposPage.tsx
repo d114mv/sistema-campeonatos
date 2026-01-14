@@ -232,8 +232,8 @@ const EquiposPage = () => {
                 <div>
                   <label className="block text-sm font-bold mb-1">Campus</label>
                   <select className="w-full border p-2 rounded" value={formData.campus} onChange={e => setFormData({...formData, campus: e.target.value})}>
-                    <option>Campus Central</option>
-                    <option>Campus Irpavi</option>
+                    <option>Campus Lanza</option>
+                    <option>Campus 23 de Marzo</option>
                   </select>
                 </div>
               </div>
