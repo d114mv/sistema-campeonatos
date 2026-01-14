@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { 
   Play, Square, Goal, AlertTriangle, ArrowLeft, Ban, Pause, Gavel, RotateCw, 
-  CheckCircle, XCircle, DollarSign, Circle, Upload, Image as ImageIcon, Lock, X 
+  CheckCircle, DollarSign, Circle, Upload, Image as ImageIcon, Lock, X 
 } from 'lucide-react';
 import MatchTimer from '../components/MatchTimer';
 import toast from 'react-hot-toast';
