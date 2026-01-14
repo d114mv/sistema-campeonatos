@@ -1,0 +1,169 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+// predefinido
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS (Opciones predefinidas) ---
+enum Role {
+  ADMIN       // Organizador
+  OFICIAL     // Oficial de mesa
+}
+
+enum SportType {
+  FUTSAL
+  VOLEY
+  BASKET
+}
+
+enum MatchStatus {
+  PROGRAMADO
+  EN_VIVO
+  ENTRETIEMPO
+  FINALIZADO
+  CANCELADO
+}
+
+enum EventType {
+  GOL
+  ASISTENCIA      // Opcional si queremos registrar quien dio el pase
+  TARJETA_AMARILLA
+  TARJETA_ROJA
+  FALTA
+  WALKOVER_LOCAL
+  WALKOVER_VISITANTE
+}
+
+// --- MODELOS (Tablas) ---
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password      String
+  nombre        String
+  rol           Role     @default(OFICIAL)
+  createdAt     DateTime @default(now())
+}
+
+model Career {
+  id      Int      @id @default(autoincrement())
+  nombre String @unique
+  equipos Team[]
+}
+
+model Championship {
+  id              Int         @id @default(autoincrement())
+  nombre          String
+  tipo            SportType   @default(FUTSAL)
+  fechaInicio     DateTime
+  fechaFin        DateTime?
+  estado          Boolean     @default(true) // Activo o Inactivo
+  equipos         Team[]
+  jornadas        Matchday[]
+}
+
+model Team {
+  id              Int          @id @default(autoincrement())
+  nombre          String
+  abreviatura     String?
+  escudoUrl       String?      // URL de Cloudinary
+  campus          String?      // Cancha local por defecto
+  
+  carreraId       Int
+  carrera         Career       @relation(fields: [carreraId], references: [id])
+  
+  campeonatoId    Int
+  campeonato      Championship @relation(fields: [campeonatoId], references: [id])
+  
+  jugadores       Player[]
+  
+  // Relaciones inversas para los partidos
+  partidosLocal     Match[] @relation("HomeTeam")
+  partidosVisitante Match[] @relation("AwayTeam")
+}
+
+model Player {
+  id          Int     @id @default(autoincrement())
+  nombre      String
+  dorsal      Int
+  posicion    String? // "Arquero", "Ala", etc.
+  
+  equipoId    Int
+  equipo      Team    @relation(fields: [equipoId], references: [id])
+  
+  // Historial de eventos (goles, tarjetas)
+  eventos     MatchEvent[]
+}
+
+model Matchday {
+  id           Int          @id @default(autoincrement())
+  nombre       String       // "Jornada 1", "Octavos de Final"
+  esPlayoff    Boolean      @default(false)
+  orden        Int          // 1, 2, 3...
+  
+  campeonatoId Int
+  campeonato   Championship @relation(fields: [campeonatoId], references: [id])
+  
+  partidos     Match[]
+}
+
+model Match {
+  id              Int         @id @default(autoincrement())
+  fecha           DateTime
+  estado          MatchStatus @default(PROGRAMADO)
+  inicioTiempo    DateTime? 
+  tiempoJuego     Int       @default(0)
+  periodo         Int       @default(1)
+  
+  // Relaciones
+  jornadaId       Int
+  jornada         Matchday    @relation(fields: [jornadaId], references: [id])
+  
+  equipoLocalId   Int
+  equipoLocal     Team        @relation("HomeTeam", fields: [equipoLocalId], references: [id])
+  
+  equipoVisitanteId Int
+  equipoVisitante Team        @relation("AwayTeam", fields: [equipoVisitanteId], references: [id])
+
+  // Marcador
+  golesLocal      Int         @default(0)
+  golesVisitante  Int         @default(0)
+
+  // Control Económico y Logístico
+  pagoArbitrajeLocal     Boolean @default(false)
+  pagoArbitrajeVisitante Boolean @default(false)
+  llevoBalonLocal        Boolean @default(false)
+  llevoBalonVisitante    Boolean @default(false)
+  
+  // Evidencia
+  planillaUrl     String?     // Foto subida por el oficial
+  controlFinalizado Boolean   @default(false)
+
+  // Eventos del partido
+  eventos         MatchEvent[]
+}
+
+model MatchEvent {
+  id          Int       @id @default(autoincrement())
+  tipo        EventType
+  minuto      Int
+  
+  partidoId   Int
+  partido     Match     @relation(fields: [partidoId], references: [id])
+  
+  jugadorId   Int?      // Puede ser null si es un evento general, aunque usualmente va al jugador
+  jugador     Player?   @relation(fields: [jugadorId], references: [id])
+  
+  createdAt   DateTime  @default(now())
+}

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Match" ADD COLUMN     "periodo" INTEGER NOT NULL DEFAULT 1;
